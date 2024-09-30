@@ -1,0 +1,110 @@
+import { useEffect, useState } from 'react';
+import ReactPaginate from 'react-paginate';
+import './App.css';
+
+function App() {
+  const [data, setData] = useState([]);
+  const [currentItems, setCurrentItems] = useState([]);
+  const [pageCount, setPageCount] = useState(0);
+  const [itemOffset, setItemOffset] = useState(0);
+  const itemsPerPage = 6;
+
+  // Fetch data from API
+  useEffect(() => {
+    fetch("https://fakestoreapi.com/products")
+      .then((result) => result.json())
+      .then((resp) => {
+        setData(resp); // Set the complete data
+      });
+  }, []); // Empty array means this runs only once when the component mounts
+
+  // Handle pagination logic
+  useEffect(() => {
+    const endOffset = itemOffset + itemsPerPage;
+    setCurrentItems(data.slice(itemOffset, endOffset)); // Set current items for display
+    setPageCount(Math.ceil(data.length / itemsPerPage)); // Set total pages count
+  }, [itemOffset, itemsPerPage, data]);
+
+  // Handle page click (for ReactPaginate)
+  const handlePageClick = (event) => {
+    const newOffset = (event.selected * itemsPerPage) % data.length;
+    setItemOffset(newOffset); // Update the offset for the new page
+  };
+
+  // Handle next and previous buttons
+  const handleNext = () => {
+    if (itemOffset + itemsPerPage < data.length) {
+      setItemOffset(itemOffset + itemsPerPage);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (itemOffset - itemsPerPage >= 0) {
+      setItemOffset(itemOffset - itemsPerPage);
+    }
+  };
+
+  return (
+    <>
+      <div className='pagination'>
+        <button type='button' onClick={handlePrevious} disabled={itemOffset === 0}>
+          Previous
+        </button>
+        <p>{Math.floor(itemOffset / itemsPerPage) + 1} of {pageCount}</p>
+        <button type='button' onClick={handleNext} disabled={itemOffset + itemsPerPage >= data.length}>
+          Next
+        </button>
+      </div>
+
+      <div className="pagination-container">
+        <ReactPaginate
+          previousLabel={"Previous"}
+          nextLabel={"Next"}
+          breakLabel={"..."}
+          pageCount={pageCount}
+          marginPagesDisplayed={2}
+          pageRangeDisplayed={3}
+          onPageChange={handlePageClick}
+          containerClassName={"pagination"}
+          previousLinkClassName={"pagination__link"}
+          nextLinkClassName={"pagination__link"}
+          disabledClassName={"pagination__link--disabled"}
+          activeClassName={"pagination__link--active"}
+        />
+      </div>
+
+      <header className="masthead clear">
+        <div className="centered">
+          <div className="site-branding">
+            <h1 className="site-title">Get API Calling</h1>
+          </div>
+        </div>
+      </header>
+
+      <div className="cards-container">
+        {
+          currentItems.map((item) => (
+            <main className="main-area" key={item.id}>
+              <div className="centered">
+                <section className="cards">
+                  <article className="card">
+                    <picture className="thumbnail">
+                      <img src={item.image} alt={item.title} />
+                    </picture>
+                    <div className="card-content">
+                      <h2>{item.title}</h2>
+                      <p>{item.description}</p>
+                      <h1>Price: ${item.price}</h1>
+                    </div>
+                  </article>
+                </section>
+              </div>
+            </main>
+          ))
+        }
+      </div>
+    </>
+  );
+}
+
+export default App;
